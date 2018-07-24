@@ -4,15 +4,12 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/nlopes/slack"
 	"fmt"
-	"log"
-	"bufio"
-	"io"
+
+	"github.com/nlopes/slack"
 )
 
-
-func PostSlack(programName string, commandError error)  {
+func PostSlack(programName string, commandError error) {
 	api := slack.New(os.Getenv("SLACK_TOKEN"))
 	username := os.Getenv("SLACK_USER_ID")
 	var message string
@@ -26,29 +23,10 @@ func PostSlack(programName string, commandError error)  {
 
 func RunCommandAndStreamOutputStdout(name string, args []string) error {
 	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	stdout, err := cmd.StdoutPipe()
-	rd := bufio.NewReader(stdout)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-
-	defer stdout.Close()
-	for {
-		line, _, err := rd.ReadLine()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(string(line))
-	}
-
-	return cmd.Wait()
+	return cmd.Run()
 }
 
 func main() {
