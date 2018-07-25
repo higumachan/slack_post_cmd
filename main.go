@@ -6,17 +6,20 @@ import (
 
 	"fmt"
 
+	"strings"
+
 	"github.com/nlopes/slack"
 )
 
-func PostSlack(programName string, commandError error) {
+func PostSlack(programName string, args []string, commandError error) {
 	api := slack.New(os.Getenv("SLACK_TOKEN"))
 	username := os.Getenv("SLACK_USER_ID")
+	args_string := strings.Join(args, " ")
 	var message string
 	if commandError == nil {
-		message = fmt.Sprintf("<@%s> finished %s", username, programName)
+		message = fmt.Sprintf("<@%s> finished %s %s", username, programName, args_string)
 	} else {
-		message = fmt.Sprintf("<@%s> failed %s %s", username, programName, commandError)
+		message = fmt.Sprintf("<@%s> failed %s %s %s", username, programName, args_string, commandError)
 	}
 	api.PostMessage(os.Getenv("SLACK_CHANNEL_ID"), message, slack.PostMessageParameters{})
 }
@@ -34,5 +37,5 @@ func main() {
 	var args = os.Args[2:]
 
 	err := RunCommandAndStreamOutputStdout(name, args)
-	PostSlack(name, err)
+	PostSlack(name, args, err)
 }
